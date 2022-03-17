@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang='en-us'>
+<meta name='viewport' content='width=device-width,initial-scale=1.0'>
+<head>
+  <title>Payment Allocator</title>
+  <link rel="icon" href="https://cdn3.iconfinder.com/data/icons/microeconomics-color/64/cost-prize-share-money-allocate-512.png">
+  <style>
+  	.fancy{
+    	color: white;
+        text-shadow: 1px 1px 2px black, 0 0 25px blue, 0 0 5px darkblue;
+	  }
+    .error{
+    	color: white;
+        text-shadow: 1px 1px 2px black, 0 0 25px red, 0 0 5px darkred;
+	  }
+    .surround{
+      border: 2px solid clear;
+      border-radius: 5px;
+    }
+    input:hover{
+      border: 1px solid aqua;
+      box-shadow: 5px 10px 18px black;
+    }
+    .center{
+      margin: 0;
+      position: absolute;
+      left: 50%;
+      -ms-transform: translate(-50%,-50%);
+      transform: translate(-50%,-50%);
+    }
+    body {
+      background-image: url("https://marketplace.canva.com/EAD2962NKnQ/2/0/1600w/canva-rainbow-gradient-pink-and-purple-zoom-virtual-background-_Tcjok-d9b4.jpg");
+      background-repeat: no-repeat;
+      background-size: cover;
+    }
+  </style>
+</head>
+<body>
+  <h1 style='text-align:center;'>App to Distribute Payments Equally</h1>
+  <h4 style='text-align:center;'>Enter the names of several people and the amount<br> they paid, and the app will tell you the steps to take to<br> give everyone an equal amount</h4>
+  <h6 style='text-align:center;'>Type in format: name amount,name amount...</h6><br><br>
+  <div class='center'>
+    <div class='surround'>
+      <div class='changer'>
+        <label for='names'></label><br><br>
+        <input type='text' id='inputfield' value=''><br><br>
+        <button onclick='main()'>Calculate</button>
+      </div>
+    </div>
+  </div>
+  <br><br><br><br><br><br>
+  <div class='fancy'>
+    <ul style='text-align:center;' id='mylist'></ul>
+    <h1 style='text-align:center;' id='last'></h1>
+  </div>
+  <div class='error'>
+    <h1 style='text-align:center;' id='error'></h1>
+  </div>
+  <script>
+  class person{
+    constructor(name,paid){
+      this.name=name;
+      this.paid=paid;
+      this.owe=0;
+    }
+  }
+
+  function main(){
+    var input=document.getElementById("inputfield").value;
+    var info=unzip(input);
+    var instructions=[];
+    var total=0;
+    total=filler(info);
+    var target=total/(info.length);
+    sanitizer(info,instructions,target);
+    let list=document.getElementById('mylist');
+    instructions.forEach((item)=>{
+      let li=document.createElement('li');
+      li.innerText=item;
+      list.appendChild(li);
+    });
+    if(!target){
+      document.getElementById("error").innerHTML="Invalid entry";
+    }else{
+      document.getElementById("last").innerHTML="In the end you should have around $"+(target).toFixed(2)+" each";
+    }
+    // instructions.forEach((item)=>{
+    //   let li=document.createElement('li');
+    //   list.removeChild(li);
+    // });
+
+  }
+
+  function unzip(sling){
+    var data=[];
+    while(sling.length!=0){
+      var commaind=sling.indexOf(',');
+      if(commaind!=-1){
+        var spaceind=sling.indexOf(' ');
+        var segment=sling.substr(0,commaind);
+        var nm=segment.substr(0,spaceind);
+        var amt=parseInt(segment.substr(spaceind,segment.length));
+        let ppl=new person(nm,amt);
+        data.push(ppl);
+        overwrite=sling;
+        sling=sling.substr(commaind+1,sling.length);
+      }else{
+        var spaceind=sling.indexOf(' ');
+        var nm=sling.substr(0,spaceind);
+        var amt=parseInt(sling.substr(spaceind,sling.length));
+        let ppl=new person(nm,amt);
+        data.push(ppl);
+        sling='';
+      }
+    }
+    return data;
+  }
+
+  function sanitizer(info,instructions,target){
+    var payers=[];
+    var getters=[];
+    for(let current in info){
+      info[current].owe=target-info[current].paid;
+      if(info[current].owe==0){
+        instructions.push(info[current].name+", you are good to go");
+      }else if(info[current].owe>0){
+        payers.push(info[current]);
+      }else{
+        getters.push(info[current]);
+      }
+    }
+    complex(payers,getters,instructions);
+  }
+
+  function complex(payers,getters,instructions){
+    var i=0;
+    var j=0;
+    while(i<payers.length&&j<getters.length){
+      if(payers[i].owe==-1*getters[j].owe){
+        instructions.push(text(payers[i].name,getters[j].name,(payers[i].owe).toFixed(2)));
+        i++;
+        j++;
+      }else if(payers[i].owe>-1*getters[j].owe){
+        instructions.push(text(payers[i].name,getters[j].name,-1*(getters[j].owe).toFixed(2)));
+        payers[i].owe+=getters[j].owe;
+        j++;
+      }else{
+        instructions.push(text(payers[i].name,getters[j].name,(payers[i].owe).toFixed(2)));
+        getters[j].owe+=payers[i].owe;
+        i++;
+      }
+    }
+  }
+
+  function text(owee,recipient,amount){
+    return owee+", you give "+recipient+" $"+amount;
+  }
+
+  function filler(info){
+    var counter=0;
+    for(let debt in info){
+      counter+=info[debt].paid;
+    }
+    return counter;
+  }
+
+  </script>
+</body>
+</html>
